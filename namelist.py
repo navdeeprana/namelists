@@ -30,6 +30,7 @@ class nml(dict):
         >>> sp.write()
         """
 
+        self.name=name
         fname = kwargs.get('fname',None)
         if fname:
             _dict = self.load(fname)
@@ -41,17 +42,18 @@ class nml(dict):
         else:
             self.str_width = 8
         
-        self.name=name
 
     def load(self,fname):
+        import re
         def get_pair(line):
             def get_value(value):
                 # Numbers
                 if value.isdigit():
                     return int(value)
                 # Float
-                if any(exp in value for exp in ['.e','.d']):
-                    return float(value.replace('.d','.e'))
+                if any(exp in value for exp in ['e+','d+','e-','d-']):
+                    value = value.replace('d+','e+').replace('d-','e-')
+                    return float(value.replace('d+','e+').replace('d-','e-'))
                 # Bool
                 elif value=='.true.' or value=='.false':
                     return bool(value.replace('.',''))
@@ -63,7 +65,7 @@ class nml(dict):
             if ',' in value:
                 old_value = value.split(',')
                 new_value = []
-                for li in l:
+                for li in old_value:
                     new_value.append(get_value(li))
                 return var, new_value
             else:
@@ -106,6 +108,7 @@ class nml(dict):
             raise ValueError('%s is not a part of the namelist.'%key)
 
     def write(self,**kwargs):
+        import re
         """
         Print a name list to stderr, or write it to a file, in a fortran readable format.
 
@@ -119,8 +122,7 @@ class nml(dict):
         helpful when writing multiple namelists to the same file.
         """
         def fortran_double(value):
-            return format(value,'.0e').replace('e','.d')
-        
+            return re.sub('0*e','d',format(value,'.5e'))
         
         to_write = ['&'+self.name]
         for key, value in self.items():

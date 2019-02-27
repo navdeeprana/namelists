@@ -1,1 +1,1 @@
-from . import namelist
+from .namelist import nml
