@@ -45,15 +45,15 @@ class nml(dict):
 
     def load(self,fname):
         import re
+        regex = re.compile(r'[+-]?(\d+(\.\d*)?|\.\d+)([dDeE][+-]?\d+)?')
         def get_pair(line):
             def get_value(value):
                 # Numbers
                 if value.isdigit():
                     return int(value)
                 # Float
-                if any(exp in value for exp in ['e+','d+','e-','d-']):
-                    value = value.replace('d+','e+').replace('d-','e-')
-                    return float(value.replace('d+','e+').replace('d-','e-'))
+                if (re.match(regex,value)):
+                    return float(value.lower().replace('d+','e+').replace('d-','e-'))
                 # Bool
                 elif value=='.true.' or value=='.false':
                     return bool(value.replace('.',''))
@@ -122,7 +122,10 @@ class nml(dict):
         helpful when writing multiple namelists to the same file.
         """
         def fortran_double(value):
-            return re.sub('0*e','d',format(value,'.5e'))
+            value = re.sub('0*e','d',format(value,'.5e'))
+            #value = re.sub('-0*','-',value)
+            #value = re.sub('\\+0*','0',value)
+            return value
         
         to_write = ['&'+self.name]
         for key, value in self.items():
