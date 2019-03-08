@@ -1,6 +1,6 @@
 """
 Fortran namelist class for python, is based on dictionary. It is basically a dictionary
-with added support to load a fortran namelist file and write it as well. 
+with added support to load a fortran namelist file and write it.
 """
 class nml(dict):
     def __init__(self,name,**kwargs):
@@ -42,7 +42,17 @@ class nml(dict):
         else:
             self.str_width = 8
         
+        # Set internals vars. These will not be printed.
+        self.internals = ['internals','name','str_width']
 
+    def __setattr__(self,key,value):
+        self[key] = value
+    def __getattr__(self,name):
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError
+        
     def load(self,fname):
         import re
         regex = re.compile(r'[+-]?(\d+(\.\d*)?|\.\d+)([dDeE][+-]?\d+)?')
@@ -53,7 +63,7 @@ class nml(dict):
                     return int(value)
                 # Float
                 if (re.match(regex,value)):
-                    return float(value.lower().replace('d+','e+').replace('d-','e-'))
+                    return float(value.lower().replace('d','e'))
                 # Bool
                 elif value=='.true.' or value=='.false':
                     return bool(value.replace('.',''))
@@ -62,12 +72,20 @@ class nml(dict):
                     return value.strip('\n')[1:-1]
                     
             var, value = line.replace(' ','').split('=')
+
+            if value.endswith(','):
+                value = value[:-1]
+            # Trailing commas are optional, not desired.
+
             if ',' in value:
-                old_value = value.split(',')
-                new_value = []
-                for li in old_value:
-                    new_value.append(get_value(li))
-                return var, new_value
+                # Comma separated values are arrays, treat them as python lists.
+                old_values = value.split(',')
+                new_values = []
+                for vi in old_values:
+                    # Check if value is not an empty string
+                    if vi:
+                        new_values.append(get_value(vi))
+                return var, new_values
             else:
                 return var, get_value(value)
         
@@ -121,36 +139,41 @@ class nml(dict):
         Write mode, 'w' either creates a new file or overwrites, 'a' appends to an existing file,
         helpful when writing multiple namelists to the same file.
         """
-        def fortran_double(value):
-            value = re.sub('0*e','d',format(value,'.5e'))
-            #value = re.sub('-0*','-',value)
-            #value = re.sub('\\+0*','0',value)
-            return value
-        
-        to_write = ['&'+self.name]
-        for key, value in self.items():
+        def value_to_write(value):
+            if type(value) is int :
+                return " %d"%value
+
             if type(value) is str :
-                value = "'%s'"%value
+                return " '%s'"%value
 
             elif type(value) is float :
-                value = fortran_double(value)
+                #value = re.sub('-0*','-',value)
+                #value = re.sub('\\+0*','0',value)
+                if value < 0 :
+                    return re.sub('0*e','d',format(value,'.5e'))
+                else :
+                    return ' ' + re.sub('0*e','d',format(value,'.5e'))
 
             elif type(value) is bool :
                 if value :
-                    value = '.true.'
+                    return ' .true.'
                 else :
-                    value = '.false.'
+                    return ' .false.'
 
-            elif type(value) is list :
-                new = ''
-                for l in value :
-                    if type(l) is float:
-                        new = new + fortran_double(l) + ", "
-                    else:
-                        new = new + str(l) + ", "
-                value = new[:-2]
+        to_write = ['&'+self.name]
+        for key, value in self.items():
+            # No output for internal keys.
+            if key in self.internals:
+                continue
+            if type(value) is list :
+                line = ''
+                for vi in value :
+                    line = line + value_to_write(vi) + ","
+                line = line[:-1]
+            else :
+                line = value_to_write(value)
 
-            to_write.append(key.ljust(self.str_width)+'= '+str(value))
+            to_write.append(key.ljust(self.str_width)+' ='+str(line))
         to_write.append('/')
         fname = kwargs.get('fname',None)
         if fname:
