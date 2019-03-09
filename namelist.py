@@ -105,26 +105,6 @@ class nml(dict):
                     break
         return _dict
 
-    def change(self,key,value):
-        """
-        Change the value corresponding to an already present key in the namelist.
-
-        Parameters
-        ----------
-        key : str
-              Must be in dictionary.
-
-        value : datatype
-              Must be a valid fortran datatype.
-        """
-        if key in self:
-            if type(self[key]) is type(value):
-                self[key] = value
-            else:
-                raise TypeError('Expected %s, got %s'%(type(self[key]), type(value)))
-        else:
-            raise ValueError('%s is not a part of the namelist.'%key)
-
     def write(self,**kwargs):
         import re
         """
@@ -143,7 +123,7 @@ class nml(dict):
             if type(value) is int :
                 return " %d"%value
 
-            if type(value) is str :
+            elif type(value) is str :
                 return " '%s'"%value
 
             elif type(value) is float :
@@ -159,6 +139,8 @@ class nml(dict):
                     return ' .true.'
                 else :
                     return ' .false.'
+            else :
+                raise TypeError
 
         to_write = ['&'+self.name]
         for key, value in self.items():
