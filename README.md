@@ -1,9 +1,6 @@
 # namelists
-A python implementation of fortran namelists using dictionaries.
+A python implementation of fortran namelists.
 Useful to load fortran namelists and use the parameters for data processing and analysis.
-
-## Implementation
-`nml` class is an extension of `dict` class with methods to read/write fortran namelists.
 
 ## Examples
 ### Python Example
@@ -16,12 +13,11 @@ dummy = nml('dummy_nml',_dict={'n': 123, 'f' : 3.14e0, 'b' : True, 'c' : 'foobar
 
 # Add a new variable/ change existing
 dummy.c = 'barfoo'
-#or
-dummy['c'] = 'barfoo'
 
-# Write to standard python output
+# Write to stdout
 dummy.write()
-# Write to a valid fortran namelist file
+
+# Write to a Fortran readable namelist file
 dummy.write(fname='dummy.nml')
 ```
 ### Fortran Example
