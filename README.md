@@ -9,7 +9,7 @@ Useful to load fortran namelists and use the parameters for data processing and 
 from namelists import nml
 
 # Create a new name list with a dictionary.
-dummy = nml('dummy_nml',_dict={'n': 123, 'f' : 3.14e0, 'b' : True, 'c' : 'foobar'}
+dummy = nml('dummy_nml',_dict={'n': 123, 'f' : 3.14e0, 'b' : True, 'c' : 'foobar'})
 
 # Add a new variable/ change existing
 dummy.c = 'barfoo'
