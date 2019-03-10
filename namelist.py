@@ -1,8 +1,7 @@
 """
-Fortran namelist class for python, is based on dictionary. It is basically a dictionary
-with added support to load a fortran namelist file and write it.
+Fortran namelist class for python.
 """
-class nml(dict):
+class nml():
     def __init__(self,name,**kwargs):
         """
         Initiate a namelist with given name.
@@ -37,19 +36,19 @@ class nml(dict):
         else:
             _dict = kwargs.get('_dict',None)
         if _dict:
-            dict.__init__(self,_dict)
-            self.str_width = max(len(max(self.keys(),key=len)), 8) + 1
+            self.__dict__.__init__(_dict)
+            self.str_width = max(len(max(self.__dict__.keys(),key=len)), 8) + 1
         else:
             self.str_width = 8
         
         # Set internals vars. These will not be printed.
         self.internals = ['internals','name','str_width']
 
-    def __setattr__(self,key,value):
-        self[key] = value
+    def __setattr__(self,name,value):
+        self.__dict__[name] = value
     def __getattr__(self,name):
         try:
-            return self[name]
+            return self.__dict__[name]
         except KeyError:
             raise AttributeError
         
@@ -121,41 +120,40 @@ class nml(dict):
         """
         def value_to_write(value):
             if type(value) is int :
-                return " %d"%value
+                return str(value)
 
             elif type(value) is str :
-                return " '%s'"%value
+                return "'%s'"%value
 
             elif type(value) is float :
                 #value = re.sub('-0*','-',value)
                 #value = re.sub('\\+0*','0',value)
-                if value < 0 :
-                    return re.sub('0*e','d',format(value,'.5e'))
-                else :
-                    return ' ' + re.sub('0*e','d',format(value,'.5e'))
+                return re.sub('0*e','d',format(value,'.5e'))
 
             elif type(value) is bool :
                 if value :
-                    return ' .true.'
+                    return '.true.'
                 else :
-                    return ' .false.'
+                    return '.false.'
             else :
                 raise TypeError
 
         to_write = ['&'+self.name]
-        for key, value in self.items():
+        for key, value in self.__dict__.items():
             # No output for internal keys.
             if key in self.internals:
                 continue
             if type(value) is list :
                 line = ''
                 for vi in value :
-                    line = line + value_to_write(vi) + ","
-                line = line[:-1]
+                    line = line + value_to_write(vi) + ", "
+                line = line[:-2]
             else :
                 line = value_to_write(value)
+            if not line.startswith(('-',"'",'.')):
+                line = ' ' +  line
 
-            to_write.append(key.ljust(self.str_width)+' ='+str(line))
+            to_write.append(key.ljust(self.str_width)+' =' + line)
         to_write.append('/')
         fname = kwargs.get('fname',None)
         if fname:
