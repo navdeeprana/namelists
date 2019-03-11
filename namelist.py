@@ -47,10 +47,7 @@ class nml():
     def __setattr__(self,name,value):
         self.__dict__[name] = value
     def __getattr__(self,name):
-        try:
-            return self.__dict__[name]
-        except KeyError:
-            raise AttributeError
+        return self.__dict__[name]
         
     def load(self,fname):
         import re
@@ -64,7 +61,7 @@ class nml():
                 if (re.match(regex,value)):
                     return float(value.lower().replace('d','e'))
                 # Bool
-                elif value=='.true.' or value=='.false':
+                elif value=='.true.' or value=='.false.':
                     return bool(value.replace('.',''))
                 # String
                 elif "'" in value:
@@ -136,7 +133,7 @@ class nml():
                 else :
                     return '.false.'
             else :
-                raise TypeError
+                raise TypeError('%s is not a valid type for %s'%(type(value),value))
 
         to_write = ['&'+self.name]
         for key, value in self.__dict__.items():
