@@ -48,6 +48,8 @@ class nml():
         self.__dict__[name] = value
     def __getattr__(self,name):
         return self.__dict__[name]
+    def __repr__(self):
+        return self.write(for_repr=True)
         
     def load(self,fname):
         import re
@@ -101,7 +103,7 @@ class nml():
                     break
         return _dict
 
-    def write(self,**kwargs):
+    def write(self,for_repr=False,**kwargs):
         import re
         """
         Print a name list to stderr, or write it to a file, in a fortran readable format.
@@ -152,6 +154,11 @@ class nml():
 
             to_write.append(key.ljust(self.str_width)+' =' + line)
         to_write.append('/')
+        if for_repr:
+            to_write_str = ''
+            for line in to_write :
+                to_write_str = to_write_str + line + '\n'
+            return to_write_str
         fname = kwargs.get('fname',None)
         if fname:
             mode = kwargs.get('mode','w')
