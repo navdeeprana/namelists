@@ -46,10 +46,19 @@ class nml():
 
     def __setattr__(self,name,value):
         self.__dict__[name] = value
+
     def __getattr__(self,name):
         return self.__dict__[name]
+
     def __repr__(self):
         return self.write(for_repr=True)
+
+    def join(self,tojoin):
+        _dict = {}
+        for key, value in tojoin.__dict__.items():
+            if key not in self.internals:
+                _dict[key] = value
+        self.__dict__.update(_dict)
         
     def load(self,fname):
         import re
