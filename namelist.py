@@ -45,7 +45,10 @@ class nml():
         self.internals = ['internals','name','str_width']
 
     def __setattr__(self,name,value):
-        self.__dict__[name] = value
+        if value in ['.true.', '.false.','.TRUE.','.FALSE.'] :
+            raise ValueError('Fortran style .true./.false. is invalid. Use Python style True/False instead.')
+        else:
+            self.__dict__[name] = value
 
     def __getattr__(self,name):
         return self.__dict__[name]
